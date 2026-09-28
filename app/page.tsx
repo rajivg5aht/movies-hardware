@@ -1,98 +1,253 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-
-const PHONE_PRIMARY = "9860171706";
-const PHONE_SECONDARY = "9851244171";
-const WHATSAPP = "9779860171706";
-const MAP_URL = "https://www.google.com/maps/search/?api=1&query=Jagati%2C%20Bhaktapur%2C%20Nepal";
-
-type IconName = "arrow" | "chevron" | "phone" | "message" | "pin" | "menu" | "close" | "search" | "pipe" | "shield" | "layers" | "building" | "check" | "plus";
-
-function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
-  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true };
-  const paths: Record<IconName, React.ReactNode> = {
-    arrow: <><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></>,
-    chevron: <path d="m7 10 5 5 5-5" />,
-    phone: <><path d="M5.2 4.8 8.1 4l1.7 4-1.9 1.4a15.1 15.1 0 0 0 6.7 6.7l1.4-1.9 4 1.7-.8 2.9c-.3 1-1.4 1.6-2.4 1.4C9.9 19 5 14.1 3.8 7.2c-.2-1 .4-2.1 1.4-2.4Z" /></>,
-    message: <><path d="M20 11.5a7.8 7.8 0 0 1-8 7.5c-1.1 0-2.1-.2-3-.6L4 20l1.6-4.2A7.2 7.2 0 0 1 4 11.5 7.8 7.8 0 0 1 12 4a7.8 7.8 0 0 1 8 7.5Z" /><path d="M8 12h.01M12 12h.01M16 12h.01" /></>,
-    pin: <><path d="M20 10c0 5-8 10-8 10S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>,
-    menu: <><path d="M4 7h16M4 12h16M4 17h16" /></>, close: <><path d="m6 6 12 12M18 6 6 18" /></>,
-    search: <><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></>,
-    pipe: <><path d="M5 5v5h4v4H5v5h14v-5h-4v-4h4V5H5Z" /><path d="M9 10h6v4H9z" /></>,
-    shield: <><path d="M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z" /><path d="m9 12 2 2 4-4" /></>,
-    layers: <><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5M3 16l9 5 9-5" /></>,
-    building: <><path d="M4 21V5l8-3 8 3v16" /><path d="M8 21v-4h8v4M8 7h.01M12 7h.01M16 7h.01M8 11h.01M12 11h.01M16 11h.01" /></>,
-    check: <path d="m5 12 4 4L19 6" />, plus: <><path d="M12 5v14M5 12h14" /></>,
-  };
-  return <svg {...common}>{paths[name]}</svg>;
-}
-
-const categories = [
-  { name: "Plumbing", nepali: "प्लम्बिङ", description: "Pipes, fittings, valves & accessories", image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=900&q=85" },
-  { name: "Sanitaryware", nepali: "सेनिटरीवेयर", description: "Toilets, basins, sinks & more", image: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?auto=format&fit=crop&w=900&q=85" },
-  { name: "Bathroom Fittings", nepali: "बाथरुम फिटिङ", description: "Faucets, showers & accessories", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85" },
-  { name: "Tiles", nepali: "टायल्स", description: "Floor, wall & kitchen solutions", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=85" },
-  { name: "Water Pumps", nepali: "वाटर पम्प", description: "Pumps & water movement solutions", image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=900&q=85" },
-  { name: "PPR Systems", nepali: "पीपीआर प्रणाली", description: "Professional piping for every build", image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?auto=format&fit=crop&w=900&q=85" },
-  { name: "uPVC Fittings", nepali: "युपिभिसी फिटिङ", description: "Durable pipes & connection parts", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=85" },
-  { name: "CPVC Solutions", nepali: "सिपिभिसी समाधान", description: "Hot & cold water plumbing", image: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=900&q=85" },
-  { name: "HDPE Pipes", nepali: "एचडिपिइ पाइप", description: "Piping for multiple applications", image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?auto=format&fit=crop&w=900&q=85" },
-  { name: "GI & SS Pipes", nepali: "जीआई र एसएस पाइप", description: "Metal pipe products", image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=900&q=85" },
-  { name: "Machinery", nepali: "मेसिनरी", description: "Construction-ready equipment", image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=900&q=85" },
-  { name: "Urban Biogas", nepali: "अर्बन बायोग्यास", description: "Biogas-related solutions", image: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=900&q=85" },
-];
-const products = [
-  { name: "Wall-mounted basin", category: "Sanitaryware", brand: "Selected ranges", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=900&q=85", description: "A clean, practical basin option for modern homes.", tag: "Get price" },
-  { name: "PPR pipe & fittings", category: "PPR Systems", brand: "Nepatop", image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?auto=format&fit=crop&w=900&q=85", description: "For dependable residential and commercial plumbing.", tag: "Price on enquiry" },
-  { name: "Water pump range", category: "Water Pumps", brand: "Tata Water Pumps", image: "https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=900&q=85", description: "Talk to us about your water movement requirement.", tag: "Check availability" },
-  { name: "Bathroom mixer set", category: "Bathroom Fittings", brand: "Selected ranges", image: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=900&q=85", description: "Everyday fittings selected for finish and function.", tag: "Get price" },
-];
-const faqs = [
-  ["What products do you sell?", "We offer plumbing materials, sanitaryware, bathroom fittings, tiles, water pumps, machinery, pipes, fittings and related construction products."],
-  ["Where is your store located?", "You can visit us at Jagati, Bhaktapur, Nepal. Use Get Directions for the quickest route to the store."],
-  ["Can I ask for prices on WhatsApp?", "Yes. Send us the product or category you need on WhatsApp and we can help check options, availability and price."],
-  ["Do you help with contractor and project requirements?", "Yes. Tell us the material, approximate quantity and project type, and our team can help you check suitable options."],
-];
-function whatsappLink(message: string) { return `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(message)}`; }
+import Link from "next/link";
+import { useLanguage } from "@/lib/language-context";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { FloatingActions } from "@/components/layout/FloatingActions";
+import { Icon } from "@/components/ui/Icon";
+import { categories } from "@/data/categories";
+import { products, getFeaturedProducts } from "@/data/products";
+import { faqs } from "@/data/faqs";
+import { siteConfig, whatsappLink } from "@/data/site";
+import { ProductCard } from "@/components/products/ProductCard";
+import { CategoryCard } from "@/components/products/CategoryCard";
 
 export default function Home() {
-  const [language, setLanguage] = useState<"en" | "ne">("en");
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All products");
   const [search, setSearch] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [requestSent, setRequestSent] = useState(false);
-  const isNepali = language === "ne";
+  
+  const { isNepali } = useLanguage();
+  
   const t = isNepali ? {
-    home: "होम", products: "उत्पादन", brands: "ब्रान्ड", about: "हाम्रो बारेमा", why: "हामीलाई किन रोज्ने", contact: "सम्पर्क", enquire: "सोधपुछ गर्नुहोस्", explore: "उत्पादन हेर्नुहोस्", heroEyebrow: "जगाती, भक्तपुरमा विश्वसनीय स्थानीय आपूर्तिकर्ता", hero: "प्लम्बिङ, सेनिटरी र निर्माणका लागि आवश्यक सबै सामग्री", heroBody: "पाइप र फिटिङदेखि सेनिटरीवेयर, बाथरुम फिटिङ, टायल्स, वाटर पम्प र मेसिनरीसम्म — आवश्यक उत्पादनहरू एकै ठाउँमा खोज्नुहोस्।", location: "जगाती, भक्तपुर", categories: "हाम्रा उत्पादनहरू हेर्नुहोस्", categoryBody: "घर, निर्माण परियोजना, प्लम्बिङ कार्य र पेशागत आवश्यकताका लागि गुणस्तरीय सामग्री।", view: "वर्ग हेर्नुहोस्", featured: "छनोटका उत्पादनहरू", featuredBody: "घर होस् वा साइट — आफ्नो आवश्यकताको लागि सामग्री पत्ता लगाउनुहोस्।", help: "सही उत्पादन खोज्न सहयोग चाहिन्छ?", helpBody: "तपाईंको कामबारे केही जानकारी दिनुहोस्। हामीलाई तपाईंको लागि सही दिशामा लैजान दिनुहोस्।", know: "मलाई के चाहिन्छ थाहा छ", find: "उत्पादन खोज्न सहयोग चाहिन्छ", trust: "स्थानीय अनुभव, स्पष्ट सहयोग", trustBody: "हामीले चाहिने सामग्री र सम्बन्धित सहयोग सजिलै पाउन सकियोस् भन्नेमा ध्यान दिन्छौँ।", journey: "सानो प्लम्बिङ पसलदेखि पूर्ण निर्माण तथा प्लम्बिङ आपूर्तिकर्तासम्म", pros: "ठेकेदार, प्लम्बर र निर्माण पेशेवरका लागि", prosBody: "आफ्नो परियोजनाको आवश्यकता पठाउनुहोस्। हामी सामग्री विकल्प, मात्रा र उपलब्धता जाँच्न सहयोग गर्छौँ।", send: "आवश्यकता पठाउनुहोस्", large: "ठूलो आवश्यकताका लागि?", largeBody: "आफ्नो परियोजनाको विवरण दिनुहोस् र हामीसँग कुरा सुरु गर्नुहोस्।", formName: "तपाईंको नाम", formPhone: "फोन / ह्वाट्सएप", formNeed: "तपाईंलाई के चाहिन्छ?", formQty: "अनुमानित मात्रा", formMessage: "थप विवरण", submit: "ह्वाट्सएपमा सोधपुछ पठाउनुहोस्", faq: "सोधिने प्रश्नहरू", visit: "हाम्रो स्टोरमा आउनुहोस्", directions: "बाटो पत्ता लगाउनुहोस्", call: "फोन गर्नुहोस्", chat: "ह्वाट्सएपमा कुरा गर्नुहोस्", footer: "प्लम्बिङ, सेनिटरी, बाथरुम फिटिङ, टायल्स, पम्प, मेसिनरी र निर्माण-सम्बन्धित उत्पादनहरू।"
+    home: "होम", products: "उत्पादन", brands: "ब्रान्ड", about: "हाम्रो बारेमा", why: "हामीलाई किन रोज्ने", contact: "सम्पर्क", enquire: "सोधपुछ गर्नुहोस्", explore: "उत्पादन हेर्नुहोस्", heroEyebrow: "जगाती, भक्तपुरमा विश्वसनीय स्थानीय आपूर्तिकर्ता", hero: "प्लम्बिङ, सेनिटरी र निर्माणका लागि आवश्यक सबै सामग्री", heroBody: "पाइप र फिटिङदेखि सेनिटरीवेयर, बाथरुम फिटिङ, टायल्स, वाटर पम्प र मेसिनरीसम्म — आवश्यक उत्पादनहरू एकै ठाउँमा खोज्नुहोस्।", location: "जगाती, भक्तपुर", categories: "हाम्रा उत्पादनहरू हेर्नुहोस्", categoryBody: "घर, निर्माण परियोजना, प्लम्बिङ कार्य र पेशागत आवश्यकताका लागि गुणस्तरीय सामग्री।", view: "वर्ग हेर्नुहोस्", featured: "छनोटका उत्पादनहरू", featuredBody: "घर होस् वा साइट — आफ्नो आवश्यकताको लागि सामग्री पत्ता लगाउनुहोस्।", help: "सही उत्पादन खोज्न सहयोग चाहिन्छ?", helpBody: "तपाईंको कामबारे केही जानकारी दिनुहोस्। हामीलाई तपाईंको लागि सही दिशामा लैजान চিহ্নিত गर्नुहोस्।", know: "मलाई के चाहिन्छ थाहा छ", find: "उत्पादन खोज्न सहयोग चाहिन्छ", trust: "स्थानीय अनुभव, स्पष्ट सहयोग", trustBody: "हामीले चाहिने सामग्री र सम्बन्धित सहयोग सजिलै पाउन सकियोस् भन्नेमा ध्यान दिन्छौँ।", journey: "सानो प्लम्बिङ पसलदेखि पूर्ण निर्माण तथा प्लम्बिङ आपूर्तिकर्तासम्म", pros: "ठेकेदार, प्लम्बर र निर्माण पेशेवरका लागि", prosBody: "आफ्नो परियोजनाको आवश्यकता पठाउनुहोस्। हामी सामग्री विकल्प, मात्रा र उपलब्धता जाँच्न सहयोग गर्छौँ।", send: "आवश्यकता पठाउनुहोस्", large: "ठूलो आवश्यकताका लागि?", largeBody: "आफ्नो परियोजनाको विवरण दिनुहोस् र हामीसँग कुरा सुरु गर्नुहोस्।", formName: "तपाईंको नाम", formPhone: "फोन / ह्वाट्सएप", formNeed: "तपाईंलाई के चाहिन्छ?", formQty: "अनुमानित मात्रा", formMessage: "थप विवरण", submit: "ह्वाट्सएपमा सोधपुछ पठाउनुहोस्", faq: "सोधिने प्रश्नहरू", visit: "हाम्रो स्टोरमा आउनुहोस्", directions: "बाटो पत्ता लगाउनुहोस्", call: "फोन गर्नुहोस्", chat: "ह्वाट्सएपमा कुरा गर्नुहोस्", footer: "प्लम्बिङ, सेनिटरी, बाथरुम फिटिङ, टायल्स, पम्प, मेसिनरी र निर्माण-सम्बन्धित उत्पादनहरू।"
   } : {
     home: "Home", products: "Products", brands: "Brands", about: "About Us", why: "Why Choose Us", contact: "Contact", enquire: "Enquire now", explore: "Explore products", heroEyebrow: "A trusted local supplier in Jagati, Bhaktapur", hero: "Everything you need for plumbing, sanitary & construction", heroBody: "From pipes and fittings to sanitaryware, bathroom fittings, tiles, water pumps and machinery — find the products your project needs in one helpful place.", location: "Jagati, Bhaktapur", categories: "Explore our products", categoryBody: "Quality products for homes, construction projects, plumbing work and professional requirements.", view: "View category", featured: "Featured for your project", featuredBody: "Find considered product ranges for the home, workshop or site.", help: "Need help finding the right product?", helpBody: "Tell us a little about the job. We’ll help point you in the right direction.", know: "I know what I need", find: "Help me find a product", trust: "Local knowledge, helpful service", trustBody: "We focus on making it simpler to find what you need and get practical guidance when you need it.", journey: "From a small plumbing store to a complete construction & plumbing supplier", pros: "For contractors, plumbers & construction professionals", prosBody: "Send your project requirement. We can help you check material options, quantities and availability.", send: "Send your requirement", large: "Have a large requirement?", largeBody: "Share a few project details and start a conversation with our team.", formName: "Your name", formPhone: "Phone / WhatsApp", formNeed: "What do you need?", formQty: "Approximate quantity", formMessage: "Anything else we should know?", submit: "Send enquiry on WhatsApp", faq: "Frequently asked questions", visit: "Visit our store", directions: "Get directions", call: "Call us", chat: "Chat on WhatsApp", footer: "Plumbing, sanitary, bathroom fittings, tiles, pumps, machinery and construction-related products."
   };
+
   const visibleCategories = showAll ? categories : categories.slice(0, 6);
-  const filteredProducts = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
-    return products.filter((product) => (activeCategory === "All products" || product.category === activeCategory) && (!keyword || `${product.name} ${product.category} ${product.brand}`.toLowerCase().includes(keyword)));
-  }, [activeCategory, search]);
-  const scrollTo = (id: string) => { document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" }); setMenuOpen(false); };
-  const submitRequirement = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); const fields = new FormData(event.currentTarget); const message = `Hello, I have a project requirement.\n\nName: ${fields.get("name")}\nPhone: ${fields.get("phone")}\nNeed: ${fields.get("need")}\nQuantity: ${fields.get("quantity")}\nDetails: ${fields.get("message")}`; setRequestSent(true); window.open(whatsappLink(message), "_blank", "noopener,noreferrer"); };
+  const featuredProds = getFeaturedProducts().slice(0, 4);
+
+  const submitRequirement = (event: FormEvent<HTMLFormElement>) => { 
+    event.preventDefault(); 
+    const fields = new FormData(event.currentTarget); 
+    const message = `Hello, I have a project requirement.\n\nName: ${fields.get("name")}\nPhone: ${fields.get("phone")}\nNeed: ${fields.get("need")}\nQuantity: ${fields.get("quantity")}\nDetails: ${fields.get("message")}`;
+    setRequestSent(true); 
+    window.open(whatsappLink(message), "_blank", "noopener,noreferrer"); 
+  };
+
   return <main>
-    <div className="utility-bar"><div className="shell utility-inner"><p><Icon name="pin" size={15} /> Jagati, Bhaktapur, Nepal</p><div className="utility-actions"><a href={`tel:${PHONE_PRIMARY}`}><Icon name="phone" size={15} /> {PHONE_PRIMARY}</a><a href={whatsappLink("Hello Movies Sanitary and Tiles Trade Link, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={15} /> WhatsApp</a></div></div></div>
-    <header className="site-header"><div className="shell nav-wrap"><button className="brand" onClick={() => scrollTo("home")} aria-label="Go to home"><span className="brand-mark">M</span><span className="brand-copy"><strong>MOVIES</strong><small>Sanitary &amp; Tiles Trade Link</small></span></button><nav className={`desktop-nav ${menuOpen ? "open" : ""}`} aria-label="Primary navigation"><button onClick={() => scrollTo("home")}>{t.home}</button><button onClick={() => scrollTo("products")}>{t.products}</button><button onClick={() => scrollTo("brands")}>{t.brands}</button><button onClick={() => scrollTo("about")}>{t.about}</button><button onClick={() => scrollTo("why")}>{t.why}</button><button onClick={() => scrollTo("contact")}>{t.contact}</button><div className="mobile-menu-actions"><a className="button button-copper" href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={18} /> {t.enquire}</a></div></nav><div className="nav-actions"><button className="language-switch" onClick={() => setLanguage(isNepali ? "en" : "ne")} aria-label="Switch language"><span className={!isNepali ? "active" : ""}>EN</span><i>/</i><span className={isNepali ? "active nepali" : ""}>नेपाली</span></button><a className="button button-copper header-enquire" href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer">{t.enquire} <Icon name="arrow" size={17} /></a><button className="menu-toggle" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? "Close menu" : "Open menu"}>{menuOpen ? <Icon name="close" /> : <Icon name="menu" />}</button></div></div></header>
-    <section className="hero" id="home"><div className="hero-grid" /><div className="shell hero-content"><div className="hero-copy"><p className="eyebrow light-eyebrow"><span /> {t.heroEyebrow}</p><h1>{t.hero}</h1><p className="hero-text">{t.heroBody}</p><div className="hero-actions"><button className="button button-copper" onClick={() => scrollTo("products")}>{t.explore} <Icon name="arrow" size={18} /></button><a className="button button-outline-light" href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={19} /> {t.enquire}</a></div><a className="hero-location" href={MAP_URL} target="_blank" rel="noreferrer"><span><Icon name="pin" size={17} /></span>{t.location}<Icon name="arrow" size={16} /></a></div><div className="hero-media" aria-label="Modern sanitaryware and fittings collection"><div className="hero-image-main" /><div className="hero-image-detail" /><div className="hero-label"><span>Since</span><strong>2060 <small>B.S.</small></strong><p>Built through trust</p></div><div className="hero-products-note"><Icon name="layers" size={19} /><span>Bathroom fittings<br /><strong>• Pipes • Tiles • Pumps</strong></span></div></div></div></section>
-    <section className="quick-find shell" aria-label="Product finder"><div className="quick-find-intro"><span className="finder-icon"><Icon name="search" size={22} /></span><div><strong>{t.help}</strong><p>{t.helpBody}</p></div></div><div className="quick-find-actions"><button className="quick-button active" onClick={() => scrollTo("products")}><Icon name="layers" size={19} /> {t.know}<Icon name="arrow" size={17} /></button><button className="quick-button" onClick={() => scrollTo("project-enquiry")}><Icon name="message" size={19} /> {t.find}<Icon name="arrow" size={17} /></button></div></section>
-    <section className="section categories-section" id="products"><div className="shell"><div className="section-heading heading-row"><div><p className="eyebrow">PRODUCT RANGE</p><h2>{t.categories}</h2><p>{t.categoryBody}</p></div><button className="text-link desktop-only" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : "View all categories"} <Icon name="arrow" size={18} /></button></div><div className="category-grid">{visibleCategories.map((category, index) => <button className={`category-card category-${index + 1}`} key={category.name} onClick={() => { setActiveCategory(category.name); setSearch(""); scrollTo("featured"); }}><img src={category.image} alt={category.name} loading="lazy" /><span className="card-overlay" /><span className="category-copy"><small>{isNepali ? category.nepali : category.name}</small><strong>{category.description}</strong><em>{t.view} <Icon name="arrow" size={16} /></em></span></button>)}</div><button className="text-link mobile-only show-categories" onClick={() => setShowAll(!showAll)}>{showAll ? "Show fewer" : "View all categories"} <Icon name="arrow" size={18} /></button></div></section>
-    <section className="section featured-section" id="featured"><div className="shell"><div className="featured-top"><div className="section-heading compact"><p className="eyebrow">READY TO EXPLORE</p><h2>{t.featured}</h2><p>{t.featuredBody}</p></div><div className="catalogue-controls"><div className="search-box"><Icon name="search" size={18} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search pipes, fittings, pumps..." aria-label="Search products" /><button aria-label="Clear search" className={search ? "clear-search visible" : "clear-search"} onClick={() => setSearch("")}>×</button></div><div className="filter-pills"><button className={activeCategory === "All products" ? "selected" : ""} onClick={() => setActiveCategory("All products")}>All</button>{categories.slice(0, 4).map((category) => <button key={category.name} className={activeCategory === category.name ? "selected" : ""} onClick={() => setActiveCategory(category.name)}>{category.name === "Bathroom Fittings" ? "Fittings" : category.name}</button>)}</div></div></div><div className="product-grid">{filteredProducts.length > 0 ? filteredProducts.map((product) => <article className="product-card" key={product.name}><div className="product-image"><img src={product.image} alt={product.name} loading="lazy" /><span>{product.tag}</span></div><div className="product-card-body"><div className="product-meta"><small>{product.category}</small><small>{product.brand}</small></div><h3>{product.name}</h3><p>{product.description}</p><a href={whatsappLink(`Hello, I am interested in ${product.name}. Please provide the price and availability.`)} target="_blank" rel="noreferrer">{t.enquire} <Icon name="arrow" size={17} /></a></div></article>) : <div className="no-results"><Icon name="search" size={25} /><strong>No matching product in this preview</strong><p>Send us what you are looking for and we will help find it.</p><a className="button button-blue" href={whatsappLink(`Hello, I am looking for: ${search}`)} target="_blank" rel="noreferrer">Ask on WhatsApp</a></div>}</div><div className="catalogue-foot"><p><span><Icon name="check" size={15} /></span> Product availability and pricing can vary by size, specification and quantity.</p><a className="text-link" href={whatsappLink("Hello, I would like to see more product options.")} target="_blank" rel="noreferrer">Ask for more options <Icon name="arrow" size={17} /></a></div></div></section>
-    <section className="brands-section" id="brands"><div className="shell brands-layout"><div className="section-heading compact"><p className="eyebrow">OUR PRODUCT NETWORK</p><h2>Brands we work with</h2><p>Recognisable product ranges from brands available through our store.</p></div><div className="brand-cards"><div className="brand-card"><strong>nepa<span>top</span></strong><small>Pipes &amp; fittings</small></div><div className="brand-card tata"><strong>TATA</strong><small>Water Pumps</small></div><div className="brand-placeholder"><Icon name="plus" size={19} /><span>More brands<br />coming soon</span></div></div></div></section>
-    <section className="trust-section section" id="why"><div className="shell trust-layout"><div className="trust-visual"><div className="visual-panel"><p>STARTED SMALL.<br /><span>BUILT THROUGH TRUST.</span></p><div className="visual-years">2060<small>B.S.</small></div></div><div className="trust-photo"><img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=950&q=85" alt="A bright product showroom interior" loading="lazy" /></div></div><div className="trust-copy"><p className="eyebrow">WHY MOVIES</p><h2>{t.trust}</h2><p className="large-body">{t.trustBody}</p><div className="reason-list"><div><span><Icon name="shield" size={22} /></span><p><strong>Established since 2060 B.S.</strong><small>A long-running local business serving growing customer needs.</small></p></div><div><span><Icon name="layers" size={22} /></span><p><strong>Wide, practical product range</strong><small>From plumbing essentials to finishes, fittings, pumps and machinery.</small></p></div><div><span><Icon name="building" size={22} /></span><p><strong>For homes and project sites</strong><small>Useful for homeowners, plumbers, contractors and construction professionals.</small></p></div></div><button className="text-link" onClick={() => scrollTo("about")}>Read our story <Icon name="arrow" size={18} /></button></div></div></section>
-    <section className="journey-section" id="about"><div className="shell"><div className="journey-heading"><p className="eyebrow light-eyebrow"><span /> OUR JOURNEY</p><h2>{t.journey}</h2></div><div className="timeline"><article><span>01</span><small>2060 B.S.</small><h3>Business established</h3><p>A small store began with a focus on plumbing products.</p></article><article><span>02</span><small>THE START</small><h3>NPR 50,000 initial capital</h3><p>Built with a modest beginning and a focus on serving customers well.</p></article><article><span>03</span><small>GROWING WITH NEEDS</small><h3>More for every project</h3><p>The product range grew naturally as customer requirements expanded.</p></article><article><span>04</span><small>TODAY</small><h3>A broader supplier</h3><p>Plumbing, sanitary, fittings, tiles, pumps, machinery and more.</p></article></div></div></section>
-    <section className="professional-section"><div className="shell professional-inner"><div><p className="eyebrow">PROJECT SUPPORT</p><h2>{t.pros}</h2><p>{t.prosBody}</p><div className="professional-list"><span><Icon name="check" size={16} /> Product options</span><span><Icon name="check" size={16} /> Quantity checks</span><span><Icon name="check" size={16} /> Availability enquiries</span></div></div><div className="professional-actions"><a className="button button-copper" href={whatsappLink("Hello, I have a project requirement. Please help me check materials and quantities.")} target="_blank" rel="noreferrer">{t.send} <Icon name="arrow" size={18} /></a><a className="button button-outline-dark" href={whatsappLink("Hello, I would like to discuss my requirement.")} target="_blank" rel="noreferrer"><Icon name="message" size={19} /> {t.chat}</a></div></div></section>
-    <section className="enquiry-section section" id="project-enquiry"><div className="shell enquiry-layout"><div className="enquiry-copy"><p className="eyebrow">BULK &amp; PROJECT ENQUIRY</p><h2>{t.large}</h2><p>{t.largeBody}</p><div className="enquiry-contact"><span><Icon name="message" size={22} /></span><div><strong>Prefer WhatsApp?</strong><a href={whatsappLink("Hello, I have a bulk or project requirement.")} target="_blank" rel="noreferrer">Chat with us now <Icon name="arrow" size={15} /></a></div></div><div className="enquiry-image"><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?auto=format&fit=crop&w=1000&q=85" alt="Materials arranged for a construction project" loading="lazy" /></div></div><form className="enquiry-form" onSubmit={submitRequirement}><div className="form-head"><h3>Tell us what you need</h3><p>Short and simple — we’ll take it from there.</p></div><label>{t.formName}<input required name="name" placeholder="Your name" /></label><label>{t.formPhone}<input required name="phone" type="tel" placeholder="98XXXXXXXX" /></label><label>{t.formNeed}<select required name="need" defaultValue=""><option value="" disabled>Select a category</option>{categories.map((category) => <option key={category.name}>{category.name}</option>)}</select></label><label>{t.formQty}<input name="quantity" placeholder="e.g. 50 pieces / 300 ft" /></label><label className="full">{t.formMessage}<textarea name="message" rows={3} placeholder="Product type, preferred brand, project details..." /></label><button className="button button-copper full" type="submit"><Icon name="message" size={19} /> {t.submit}</button>{requestSent && <p className="form-success full"><Icon name="check" size={16} /> WhatsApp has opened with your enquiry.</p>}</form></div></section>
-    <section className="faq-section section"><div className="shell faq-layout"><div className="section-heading compact"><p className="eyebrow">HELPFUL INFORMATION</p><h2>{t.faq}</h2><p>Have another question? A call or WhatsApp message is the fastest way to reach us.</p><a className="text-link" href={whatsappLink("Hello, I have a question.")} target="_blank" rel="noreferrer">Ask a question <Icon name="arrow" size={18} /></a></div><div className="faq-list">{faqs.map(([question, answer], index) => <article key={question} className={openFaq === index ? "faq-item open" : "faq-item"}><button onClick={() => setOpenFaq(openFaq === index ? null : index)} aria-expanded={openFaq === index}><span>{question}</span><Icon name={openFaq === index ? "close" : "plus"} size={18} /></button><div><p>{answer}</p></div></article>)}</div></div></section>
-    <section className="location-section" id="contact"><div className="shell location-layout"><div className="location-copy"><p className="eyebrow">FIND US EASILY</p><h2>{t.visit}</h2><h3>Movies Sanitary and Tiles<br />Trade Link</h3><p className="address"><Icon name="pin" size={19} /> Jagati, Bhaktapur, Nepal</p><div className="location-actions"><a className="button button-copper" href={MAP_URL} target="_blank" rel="noreferrer"><Icon name="pin" size={18} /> {t.directions}</a><a className="button button-outline-dark" href={`tel:${PHONE_PRIMARY}`}><Icon name="phone" size={18} /> {t.call}</a></div><div className="number-list"><a href={`tel:${PHONE_PRIMARY}`}><small>CALL</small>{PHONE_PRIMARY}</a><a href={`tel:${PHONE_SECONDARY}`}><small>CALL</small>{PHONE_SECONDARY}</a></div></div><a className="map-card" href={MAP_URL} target="_blank" rel="noreferrer" aria-label="Get directions to Jagati, Bhaktapur"><div className="map-grid" /><div className="map-roads road-one" /><div className="map-roads road-two" /><div className="map-marker"><span><Icon name="pin" size={24} /></span><strong>Movies Sanitary<br />&amp; Tiles Trade Link</strong><small>Jagati, Bhaktapur</small></div><div className="map-direction">Open in Google Maps <Icon name="arrow" size={17} /></div></a></div></section>
-    <section className="contact-strip"><div className="shell contact-strip-inner"><div><p>Need a product or have a question?</p><strong>Talk to our team today.</strong></div><div><a className="button button-copper" href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={19} /> {t.chat}</a><a className="button button-outline-light" href={`tel:${PHONE_PRIMARY}`}><Icon name="phone" size={19} /> {PHONE_PRIMARY}</a></div></div></section>
-    <footer className="site-footer"><div className="shell footer-grid"><div className="footer-brand"><button className="brand" onClick={() => scrollTo("home")}><span className="brand-mark">M</span><span className="brand-copy"><strong>MOVIES</strong><small>Sanitary &amp; Tiles Trade Link</small></span></button><p>{t.footer}</p><button className="language-switch footer-language" onClick={() => setLanguage(isNepali ? "en" : "ne")}><span className={!isNepali ? "active" : ""}>EN</span><i>/</i><span className={isNepali ? "active nepali" : ""}>नेपाली</span></button></div><div><h4>Navigate</h4><button onClick={() => scrollTo("home")}>Home</button><button onClick={() => scrollTo("products")}>Products</button><button onClick={() => scrollTo("brands")}>Brands</button><button onClick={() => scrollTo("about")}>About us</button></div><div><h4>Product categories</h4><button onClick={() => scrollTo("products")}>Plumbing</button><button onClick={() => scrollTo("products")}>Sanitaryware</button><button onClick={() => scrollTo("products")}>Bathroom fittings</button><button onClick={() => scrollTo("products")}>Tiles &amp; water pumps</button></div><div><h4>Contact</h4><a href={`tel:${PHONE_PRIMARY}`}>{PHONE_PRIMARY}</a><a href={`tel:${PHONE_SECONDARY}`}>{PHONE_SECONDARY}</a><a href={MAP_URL} target="_blank" rel="noreferrer">Jagati, Bhaktapur, Nepal</a><a href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer">Chat on WhatsApp</a></div></div><div className="shell footer-bottom"><span>© Movies Sanitary and Tiles Trade Link. All rights reserved.</span><span>Built for clarity, trust &amp; easy enquiries.</span></div></footer>
-    <div className="floating-whatsapp"><a href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"><Icon name="message" size={23} /></a></div><div className="mobile-contact-bar"><a href={`tel:${PHONE_PRIMARY}`}><Icon name="phone" size={18} />Call</a><a href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={18} />WhatsApp</a><a href={MAP_URL} target="_blank" rel="noreferrer"><Icon name="pin" size={18} />Directions</a></div>
+    <SiteHeader />
+    
+    <section className="hero" id="home">
+      <div className="hero-grid" />
+      <div className="shell hero-content">
+        <div className="hero-copy">
+          <p className="eyebrow light-eyebrow"><span /> {t.heroEyebrow}</p>
+          <h1>{t.hero}</h1>
+          <p className="hero-text">{t.heroBody}</p>
+          <div className="hero-actions">
+            <Link href="/products" className="button button-copper">{t.explore} <Icon name="arrow" size={18} /></Link>
+            <a className="button button-outline-light" href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={19} /> {t.enquire}</a>
+          </div>
+          <a className="hero-location" href={siteConfig.mapsUrl} target="_blank" rel="noreferrer"><span><Icon name="pin" size={17} /></span>{siteConfig.location}<Icon name="arrow" size={16} /></a>
+        </div>
+        <div className="hero-media" aria-label="Modern sanitaryware and fittings collection">
+          <div className="hero-image-main" />
+          <div className="hero-image-detail" />
+          <div className="hero-label"><span>Since</span><strong>2060 <small>B.S.</small></strong><p>Built through trust</p></div>
+          <div className="hero-products-note"><Icon name="layers" size={19} /><span>Bathroom fittings<br /><strong>• Pipes • Tiles • Pumps</strong></span></div>
+        </div>
+      </div>
+    </section>
+    
+    <section className="quick-find shell" aria-label="Product finder">
+      <div className="quick-find-intro">
+        <span className="finder-icon"><Icon name="search" size={22} /></span>
+        <div><strong>{t.help}</strong><p>{t.helpBody}</p></div>
+      </div>
+      <div className="quick-find-actions">
+        <Link href="/products" className="quick-button active"><Icon name="layers" size={19} /> {t.know}<Icon name="arrow" size={17} /></Link>
+        <Link href="/enquire" className="quick-button"><Icon name="message" size={19} /> {t.find}<Icon name="arrow" size={17} /></Link>
+      </div>
+    </section>
+
+    <section className="section categories-section" id="products">
+      <div className="shell">
+        <div className="section-heading heading-row">
+          <div><p className="eyebrow">PRODUCT RANGE</p><h2>{t.categories}</h2><p>{t.categoryBody}</p></div>
+          <Link href="/products" className="text-link desktop-only">View all categories <Icon name="arrow" size={18} /></Link>
+        </div>
+        <div className="category-grid">
+          {visibleCategories.map((category) => (
+            <CategoryCard key={category.id} category={category} />
+          ))}
+        </div>
+        <Link href="/products" className="text-link mobile-only show-categories">View all categories <Icon name="arrow" size={18} /></Link>
+      </div>
+    </section>
+
+    <section className="section featured-section" id="featured">
+      <div className="shell">
+        <div className="featured-top">
+          <div className="section-heading compact"><p className="eyebrow">READY TO EXPLORE</p><h2>{t.featured}</h2><p>{t.featuredBody}</p></div>
+        </div>
+        <div className="product-grid">
+          {featuredProds.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+        <div className="catalogue-foot">
+          <p><span><Icon name="check" size={15} /></span> Product availability and pricing can vary by size, specification and quantity.</p>
+          <a className="text-link" href={whatsappLink("Hello, I would like to see more product options.")} target="_blank" rel="noreferrer">Ask for more options <Icon name="arrow" size={17} /></a>
+        </div>
+      </div>
+    </section>
+
+    <section className="brands-section" id="brands">
+      <div className="shell brands-layout">
+        <div className="section-heading compact"><p className="eyebrow">OUR PRODUCT NETWORK</p><h2>Brands we work with</h2><p>Recognisable product ranges from brands available through our store.</p></div>
+        <div className="brand-cards">
+          <div className="brand-card"><strong>nepa<span>top</span></strong><small>Pipes &amp; fittings</small></div>
+          <div className="brand-card tata"><strong>TATA</strong><small>Water Pumps</small></div>
+          <Link href="/brands" className="brand-placeholder"><Icon name="plus" size={19} /><span>View all<br />brands</span></Link>
+        </div>
+      </div>
+    </section>
+
+    <section className="trust-section section" id="why">
+      <div className="shell trust-layout">
+        <div className="trust-visual">
+          <div className="visual-panel"><p>STARTED SMALL.<br /><span>BUILT THROUGH TRUST.</span></p><div className="visual-years">2060<small>B.S.</small></div></div>
+          <div className="trust-photo"><img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=950&q=85" alt="A bright product showroom interior" loading="lazy" /></div>
+        </div>
+        <div className="trust-copy">
+          <p className="eyebrow">WHY MOVIES</p><h2>{t.trust}</h2><p className="large-body">{t.trustBody}</p>
+          <div className="reason-list">
+            <div><span><Icon name="shield" size={22} /></span><p><strong>Established since 2060 B.S.</strong><small>A long-running local business serving growing customer needs.</small></p></div>
+            <div><span><Icon name="layers" size={22} /></span><p><strong>Wide, practical product range</strong><small>From plumbing essentials to finishes, fittings, pumps and machinery.</small></p></div>
+            <div><span><Icon name="building" size={22} /></span><p><strong>For homes and project sites</strong><small>Useful for homeowners, plumbers, contractors and construction professionals.</small></p></div>
+          </div>
+          <Link href="/about" className="text-link">Read our story <Icon name="arrow" size={18} /></Link>
+        </div>
+      </div>
+    </section>
+
+    <section className="journey-section" id="about">
+      <div className="shell">
+        <div className="journey-heading"><p className="eyebrow light-eyebrow"><span /> OUR JOURNEY</p><h2>{t.journey}</h2></div>
+        <div className="timeline">
+          <article><span>01</span><small>2060 B.S.</small><h3>Business established</h3><p>A small store began with a focus on plumbing products.</p></article>
+          <article><span>02</span><small>THE START</small><h3>NPR 50,000 initial capital</h3><p>Built with a modest beginning and a focus on serving customers well.</p></article>
+          <article><span>03</span><small>GROWING WITH NEEDS</small><h3>More for every project</h3><p>The product range grew naturally as customer requirements expanded.</p></article>
+          <article><span>04</span><small>TODAY</small><h3>A broader supplier</h3><p>Plumbing, sanitary, fittings, tiles, pumps, machinery and more.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section className="professional-section">
+      <div className="shell professional-inner">
+        <div>
+          <p className="eyebrow">PROJECT SUPPORT</p><h2>{t.pros}</h2><p>{t.prosBody}</p>
+          <div className="professional-list">
+            <span><Icon name="check" size={16} /> Product options</span>
+            <span><Icon name="check" size={16} /> Quantity checks</span>
+            <span><Icon name="check" size={16} /> Availability enquiries</span>
+          </div>
+        </div>
+        <div className="professional-actions">
+          <a className="button button-copper" href={whatsappLink("Hello, I have a project requirement. Please help me check materials and quantities.")} target="_blank" rel="noreferrer">{t.send} <Icon name="arrow" size={18} /></a>
+          <a className="button button-outline-dark" href={whatsappLink("Hello, I would like to discuss my requirement.")} target="_blank" rel="noreferrer"><Icon name="message" size={19} /> {t.chat}</a>
+        </div>
+      </div>
+    </section>
+
+    <section className="enquiry-section section" id="project-enquiry">
+      <div className="shell enquiry-layout">
+        <div className="enquiry-copy">
+          <p className="eyebrow">BULK &amp; PROJECT ENQUIRY</p><h2>{t.large}</h2><p>{t.largeBody}</p>
+          <div className="enquiry-contact">
+            <span><Icon name="message" size={22} /></span>
+            <div><strong>Prefer WhatsApp?</strong><a href={whatsappLink("Hello, I have a bulk or project requirement.")} target="_blank" rel="noreferrer">Chat with us now <Icon name="arrow" size={15} /></a></div>
+          </div>
+          <div className="enquiry-image"><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?auto=format&fit=crop&w=1000&q=85" alt="Materials arranged for a construction project" loading="lazy" /></div>
+        </div>
+        <form className="enquiry-form" onSubmit={submitRequirement}>
+          <div className="form-head"><h3>Tell us what you need</h3><p>Short and simple — we’ll take it from there.</p></div>
+          <label>{t.formName}<input required name="name" placeholder="Your name" /></label>
+          <label>{t.formPhone}<input required name="phone" type="tel" placeholder="98XXXXXXXX" /></label>
+          <label>{t.formNeed}
+            <select required name="need" defaultValue="">
+              <option value="" disabled>Select a category</option>
+              {categories.map((category) => <option key={category.name}>{category.name}</option>)}
+            </select>
+          </label>
+          <label>{t.formQty}<input name="quantity" placeholder="e.g. 50 pieces / 300 ft" /></label>
+          <label className="full">{t.formMessage}<textarea name="message" rows={3} placeholder="Product type, preferred brand, project details..." /></label>
+          <button className="button button-copper full" type="submit"><Icon name="message" size={19} /> {t.submit}</button>
+          {requestSent && <p className="form-success full"><Icon name="check" size={16} /> WhatsApp has opened with your enquiry.</p>}
+        </form>
+      </div>
+    </section>
+
+    <section className="faq-section section">
+      <div className="shell faq-layout">
+        <div className="section-heading compact">
+          <p className="eyebrow">HELPFUL INFORMATION</p><h2>{t.faq}</h2>
+          <p>Have another question? A call or WhatsApp message is the fastest way to reach us.</p>
+          <Link className="text-link" href="/faq">View all FAQs <Icon name="arrow" size={18} /></Link>
+        </div>
+        <div className="faq-list">
+          {faqs.slice(0, 4).map((faq, index) => (
+            <article key={index} className={openFaq === index ? "faq-item open" : "faq-item"}>
+              <button onClick={() => setOpenFaq(openFaq === index ? null : index)} aria-expanded={openFaq === index}>
+                <span>{faq.question}</span><Icon name={openFaq === index ? "close" : "plus"} size={18} />
+              </button>
+              <div><p>{faq.answer}</p></div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section className="location-section" id="contact">
+      <div className="shell location-layout">
+        <div className="location-copy">
+          <p className="eyebrow">FIND US EASILY</p><h2>{t.visit}</h2>
+          <h3>Movies Sanitary and Tiles<br />Trade Link</h3>
+          <p className="address"><Icon name="pin" size={19} /> {siteConfig.location}</p>
+          <div className="location-actions">
+            <a className="button button-copper" href={siteConfig.mapsUrl} target="_blank" rel="noreferrer"><Icon name="pin" size={18} /> {t.directions}</a>
+            <a className="button button-outline-dark" href={`tel:${siteConfig.phones.primary}`}><Icon name="phone" size={18} /> {t.call}</a>
+          </div>
+          <div className="number-list">
+            <a href={`tel:${siteConfig.phones.primary}`}><small>CALL</small>{siteConfig.phones.primary}</a>
+            <a href={`tel:${siteConfig.phones.secondary}`}><small>CALL</small>{siteConfig.phones.secondary}</a>
+          </div>
+        </div>
+        <a className="map-card" href={siteConfig.mapsUrl} target="_blank" rel="noreferrer" aria-label="Get directions to Jagati, Bhaktapur">
+          <div className="map-grid" /><div className="map-roads road-one" /><div className="map-roads road-two" />
+          <div className="map-marker"><span><Icon name="pin" size={24} /></span><strong>Movies Sanitary<br />&amp; Tiles Trade Link</strong><small>Jagati, Bhaktapur</small></div>
+          <div className="map-direction">Open in Google Maps <Icon name="arrow" size={17} /></div>
+        </a>
+      </div>
+    </section>
+
+    <section className="contact-strip">
+      <div className="shell contact-strip-inner">
+        <div><p>Need a product or have a question?</p><strong>Talk to our team today.</strong></div>
+        <div>
+          <a className="button button-copper" href={whatsappLink("Hello, I would like to enquire about a product.")} target="_blank" rel="noreferrer"><Icon name="message" size={19} /> {t.chat}</a>
+          <a className="button button-outline-light" href={`tel:${siteConfig.phones.primary}`}><Icon name="phone" size={19} /> {siteConfig.phones.primary}</a>
+        </div>
+      </div>
+    </section>
+
+    <SiteFooter />
+    <FloatingActions />
   </main>;
 }

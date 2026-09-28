@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { Icon } from "@/components/ui/Icon";
 import { useLanguage } from "@/lib/language-context";
 import { siteConfig, whatsappLink } from "@/data/site";
+import { MapCard } from "@/components/contact/MapCard";
 
 export default function ContactPage() {
   const { t } = useLanguage();
@@ -124,31 +125,7 @@ export default function ContactPage() {
           </div>
 
           {/* Map section */}
-          <a
-            className="map-card contact-map"
-            href={siteConfig.mapsUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Get directions to Jagati, Bhaktapur"
-          >
-            <div className="map-grid" />
-            <div className="map-roads road-one" />
-            <div className="map-roads road-two" />
-            <div className="map-marker">
-              <span>
-                <Icon name="pin" size={24} />
-              </span>
-              <strong>
-                Movies Sanitary
-                <br />
-                &amp; Tiles Trade Link
-              </strong>
-              <small>Jagati, Bhaktapur</small>
-            </div>
-            <div className="map-direction">
-              Open in Google Maps <Icon name="arrow" size={17} />
-            </div>
-          </a>
+          <MapCard className="contact-map" />
         </div>
       </section>
 

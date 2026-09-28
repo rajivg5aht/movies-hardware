@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 import { useLanguage } from "@/lib/language-context";
 import { faqs } from "@/data/faqs";
 import { whatsappLink } from "@/data/site";
+import { FaqItem } from "@/components/ui/FaqItem";
 
 export default function FAQPage() {
   const { t, isNepali } = useLanguage();
@@ -35,28 +36,13 @@ export default function FAQPage() {
               const answer =
                 isNepali && faq.answerNe ? faq.answerNe : faq.answer;
               return (
-                <article
+                <FaqItem
                   key={index}
-                  className={
-                    openFaq === index ? "faq-item open" : "faq-item"
-                  }
-                >
-                  <button
-                    onClick={() =>
-                      setOpenFaq(openFaq === index ? null : index)
-                    }
-                    aria-expanded={openFaq === index}
-                  >
-                    <span>{question}</span>
-                    <Icon
-                      name={openFaq === index ? "close" : "plus"}
-                      size={18}
-                    />
-                  </button>
-                  <div>
-                    <p>{answer}</p>
-                  </div>
-                </article>
+                  question={question}
+                  answer={answer}
+                  isOpen={openFaq === index}
+                  onToggle={() => setOpenFaq(openFaq === index ? null : index)}
+                />
               );
             })}
           </div>

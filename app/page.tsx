@@ -13,6 +13,9 @@ import { faqs } from "@/data/faqs";
 import { siteConfig, whatsappLink } from "@/data/site";
 import { ProductCard } from "@/components/products/ProductCard";
 import { CategoryCard } from "@/components/products/CategoryCard";
+import { EnquiryForm } from "@/components/enquiry/EnquiryForm";
+import { MapCard } from "@/components/contact/MapCard";
+import { FaqItem } from "@/components/ui/FaqItem";
 
 export default function Home() {
   const [showAll, setShowAll] = useState(false);
@@ -31,14 +34,6 @@ export default function Home() {
 
   const visibleCategories = showAll ? categories : categories.slice(0, 6);
   const featuredProds = getFeaturedProducts().slice(0, 4);
-
-  const submitRequirement = (event: FormEvent<HTMLFormElement>) => { 
-    event.preventDefault(); 
-    const fields = new FormData(event.currentTarget); 
-    const message = `Hello, I have a project requirement.\n\nName: ${fields.get("name")}\nPhone: ${fields.get("phone")}\nNeed: ${fields.get("need")}\nQuantity: ${fields.get("quantity")}\nDetails: ${fields.get("message")}`;
-    setRequestSent(true); 
-    window.open(whatsappLink(message), "_blank", "noopener,noreferrer"); 
-  };
 
   return <main>
     <SiteHeader />
@@ -176,21 +171,7 @@ export default function Home() {
           </div>
           <div className="enquiry-image"><img src="https://images.unsplash.com/photo-1540574163026-643ea20ade25?auto=format&fit=crop&w=1000&q=85" alt="Materials arranged for a construction project" loading="lazy" /></div>
         </div>
-        <form className="enquiry-form" onSubmit={submitRequirement}>
-          <div className="form-head"><h3>Tell us what you need</h3><p>Short and simple — we’ll take it from there.</p></div>
-          <label>{t.formName}<input required name="name" placeholder="Your name" /></label>
-          <label>{t.formPhone}<input required name="phone" type="tel" placeholder="98XXXXXXXX" /></label>
-          <label>{t.formNeed}
-            <select required name="need" defaultValue="">
-              <option value="" disabled>Select a category</option>
-              {categories.map((category) => <option key={category.name}>{category.name}</option>)}
-            </select>
-          </label>
-          <label>{t.formQty}<input name="quantity" placeholder="e.g. 50 pieces / 300 ft" /></label>
-          <label className="full">{t.formMessage}<textarea name="message" rows={3} placeholder="Product type, preferred brand, project details..." /></label>
-          <button className="button button-copper full" type="submit"><Icon name="message" size={19} /> {t.submit}</button>
-          {requestSent && <p className="form-success full"><Icon name="check" size={16} /> WhatsApp has opened with your enquiry.</p>}
-        </form>
+        <EnquiryForm />
       </div>
     </section>
 
@@ -203,12 +184,13 @@ export default function Home() {
         </div>
         <div className="faq-list">
           {faqs.slice(0, 4).map((faq, index) => (
-            <article key={index} className={openFaq === index ? "faq-item open" : "faq-item"}>
-              <button onClick={() => setOpenFaq(openFaq === index ? null : index)} aria-expanded={openFaq === index}>
-                <span>{faq.question}</span><Icon name={openFaq === index ? "close" : "plus"} size={18} />
-              </button>
-              <div><p>{faq.answer}</p></div>
-            </article>
+            <FaqItem
+              key={index}
+              question={faq.question}
+              answer={faq.answer}
+              isOpen={openFaq === index}
+              onToggle={() => setOpenFaq(openFaq === index ? null : index)}
+            />
           ))}
         </div>
       </div>
@@ -229,11 +211,7 @@ export default function Home() {
             <a href={`tel:${siteConfig.phones.secondary}`}><small>CALL</small>{siteConfig.phones.secondary}</a>
           </div>
         </div>
-        <a className="map-card" href={siteConfig.mapsUrl} target="_blank" rel="noreferrer" aria-label="Get directions to Jagati, Bhaktapur">
-          <div className="map-grid" /><div className="map-roads road-one" /><div className="map-roads road-two" />
-          <div className="map-marker"><span><Icon name="pin" size={24} /></span><strong>Movies Sanitary<br />&amp; Tiles Trade Link</strong><small>Jagati, Bhaktapur</small></div>
-          <div className="map-direction">Open in Google Maps <Icon name="arrow" size={17} /></div>
-        </a>
+        <MapCard />
       </div>
     </section>
 
